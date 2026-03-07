@@ -2050,9 +2050,6 @@ func (s *Sff) ReadPalette(f io.ReadSeeker, offset int64, size uint32) ([]uint32,
 }
 
 func (s *Sff) GetSprite(g, n int16) *Sprite {
-	if g == 0x7fff {
-		return nil
-	}
 	return s.sprites[[2]int16{g, n}]
 }
 
