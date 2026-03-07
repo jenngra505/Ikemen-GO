@@ -3098,6 +3098,7 @@ func (ro *LifeBarRound) handleRoundIntro() {
 	if sys.introSkipCall && !sys.dialogueBarsFlg {
 		ro.roundCallOver = true
 		ro.callFight()
+		sys.introSkipCall = false
 	}
 	// Skip round call
 	if sys.gsf(GSF_skiprounddisplay) {
