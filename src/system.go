@@ -4094,8 +4094,8 @@ type Select struct {
 	selectedStageNo    int
 	charAnimPreload    map[int32]bool
 	stageAnimPreload   map[int32]bool
-	charSpritePreload  map[[2]uint16]bool
-	stageSpritePreload map[[2]uint16]bool
+	charSpritePreload  map[[2]int16]bool
+	stageSpritePreload map[[2]int16]bool
 	cdefOverwrite      map[int]string
 	palOverwrite       map[int]int
 	sdefOverwrite      string
@@ -4108,9 +4108,9 @@ func newSelect() *Select {
 		selectedStageNo:  -1,
 		charAnimPreload:  make(map[int32]bool),
 		stageAnimPreload: make(map[int32]bool),
-		charSpritePreload: map[[2]uint16]bool{[...]uint16{9000, 0}: true,
-			[...]uint16{9000, 1}: true},
-		stageSpritePreload: make(map[[2]uint16]bool),
+		charSpritePreload: map[[2]int16]bool{[...]int16{9000, 0}: true,
+			[...]int16{9000, 1}: true},
+		stageSpritePreload: make(map[[2]int16]bool),
 		palOverwrite:       make(map[int]int),
 		cdefOverwrite:      make(map[int]string),
 		music:              make(Music),
@@ -4438,7 +4438,7 @@ func (s *Select) AddChar(def string) *SelectChar {
 			}
 		}
 	}
-	listSpr := make(map[[2]uint16]bool)
+	listSpr := make(map[[2]int16]bool)
 	for k := range s.charSpritePreload {
 		listSpr[k] = true
 	}
@@ -4482,7 +4482,7 @@ func (s *Select) AddChar(def string) *SelectChar {
 						if fr.Group < 0 || fr.Number < 0 {
 							continue
 						}
-						listSpr[[2]uint16{uint16(fr.Group), uint16(fr.Number)}] = true
+						listSpr[[2]int16{int16(fr.Group), int16(fr.Number)}] = true
 					}
 				}
 			}
@@ -4739,9 +4739,9 @@ func (s *Select) AddStage(def string) (*SelectStage, error) {
 		}
 	}
 	if len(s.stageSpritePreload) > 0 || len(s.stageAnimPreload) > 0 {
-		listSpr := make(map[[2]uint16]bool)
+		listSpr := make(map[[2]int16]bool)
 		for k := range s.stageSpritePreload {
-			listSpr[[...]uint16{k[0], k[1]}] = true
+			listSpr[[...]int16{k[0], k[1]}] = true
 		}
 		sff := newSff()
 		// preload animations
@@ -4752,7 +4752,7 @@ func (s *Select) AddStage(def string) (*SelectStage, error) {
 				ss.anims.addAnim(anim, v)
 				for _, fr := range anim.frames {
 					if fr.Group >= 0 && fr.Number >= 0 {
-						listSpr[[2]uint16{uint16(fr.Group), uint16(fr.Number)}] = true
+						listSpr[[2]int16{int16(fr.Group), int16(fr.Number)}] = true
 					}
 				}
 			}
@@ -5099,8 +5099,8 @@ func (l *Loader) prepareTurnsFaces(pn int, fa *LifeBarFace, nm *LifeBarName, tea
 		// They won't be unless the select screen used "applypal" (or if the character was already used before maybe)
 		// https://github.com/ikemen-engine/Ikemen-GO/issues/3300
 		palIdx := sys.sel.selected[pn&1][i][1]
-		_, hasTarget := sc.sff.palList.PalTable[[...]uint16{1, uint16(palIdx)}]
-		_, has11 := sc.sff.palList.PalTable[[...]uint16{1, 1}]
+		_, hasTarget := sc.sff.palList.PalTable[[...]int16{1, uint16(palIdx)}]
+		_, has11 := sc.sff.palList.PalTable[[...]int16{1, 1}]
 
 		// Only load palettes if necessary
 		if !hasTarget || !has11 {
@@ -5108,7 +5108,7 @@ func (l *Loader) prepareTurnsFaces(pn int, fa *LifeBarFace, nm *LifeBarName, tea
 		}
 
 		// Get the sprite from the teammate's SFF
-		origSpr := sc.sff.GetSprite(uint16(fa.teammate_face_spr[0]), uint16(fa.teammate_face_spr[1]))
+		origSpr := sc.sff.GetSprite(int16(fa.teammate_face_spr[0]), int16(fa.teammate_face_spr[1]))
 		if origSpr == nil {
 			continue
 		}
