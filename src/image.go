@@ -1528,13 +1528,13 @@ func (sh *SffHeader) Read(r io.Reader, lofs *uint32, tofs *uint32) error {
 
 type Sff struct {
 	header   SffHeader
-	sprites  map[[2]uint16]*Sprite
+	sprites  map[[2]int16]*Sprite
 	palList  PaletteList
 	filename string // This is the sffCache key
 }
 
 func newSff() (s *Sff) {
-	s = &Sff{sprites: make(map[[2]uint16]*Sprite)}
+	s = &Sff{sprites: make(map[[2]int16]*Sprite)}
 	s.palList.init()
 	// Pre-allocation creates false positives when checking if a palette exists
 	//for i := uint16(1); i <= uint16(sys.cfg.Config.PaletteMax); i++ {
@@ -1684,9 +1684,9 @@ func loadSff(filename string, char bool, isMainThread bool, isActPal bool) (*Sff
 			}
 			prev = spriteList[i]
 		}
-		if s.sprites[[...]uint16{spriteList[i].Group, spriteList[i].Number}] ==
+		if s.sprites[[...]int16{spriteList[i].Group, spriteList[i].Number}] ==
 			nil {
-			s.sprites[[...]uint16{spriteList[i].Group, spriteList[i].Number}] =
+			s.sprites[[...]int16{spriteList[i].Group, spriteList[i].Number}] =
 				spriteList[i]
 		}
 		if s.header.Version[0] == 1 {
@@ -1711,7 +1711,7 @@ func loadSff(filename string, char bool, isMainThread bool, isActPal bool) (*Sff
 }
 
 // Loads a SFF with only specific sprites
-func preloadSff(filename string, char bool, preloadSpr map[[2]uint16]bool) (*Sff, []int32, error) {
+func preloadSff(filename string, char bool, preloadSpr map[[2]int16]bool) (*Sff, []int32, error) {
 	sff := newSff()
 
 	f, err := OpenFile(filename)
@@ -1740,9 +1740,9 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]uint16]bool) (*Sff
 	}
 
 	var shofs, xofs, size uint32 = h.FirstSpriteHeaderOffset, 0, 0
-	var indexOfPrevious uint16
+	var indexOfPrevious int16
 	var plShofs, plXofs, plSize uint32 = h.FirstPaletteHeaderOffset, 0, 0
-	var plIndexOfPrevious uint16
+	var plIndexOfPrevious int16
 	pl := &PaletteList{}
 	pl.init()
 	spriteList := make([]*Sprite, int(h.NumberOfSprites))
@@ -1816,9 +1816,9 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]uint16]bool) (*Sff
 		}
 		headerXofs[i] = xofs
 		headerSize[i] = size
-		if _, ok := preloadSpr[[...]uint16{spriteList[i].Group, spriteList[i].Number}]; ok || (prev == nil && spriteList[i].palidx < 0) {
+		if _, ok := preloadSpr[[...]int16{spriteList[i].Group, spriteList[i].Number}]; ok || (prev == nil && spriteList[i].palidx < 0) {
 			if ok {
-				ok = sff.sprites[[...]uint16{spriteList[i].Group, spriteList[i].Number}] == nil
+				ok = sff.sprites[[...]int16{spriteList[i].Group, spriteList[i].Number}] == nil
 			}
 			// sprite
 			if size == 0 {
@@ -1911,7 +1911,7 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]uint16]bool) (*Sff
 						}
 					} else if spriteList[i].coldepth <= 8 {
 						plSize = 0
-						plIndexOfPrevious = uint16(spriteList[i].palidx)
+						plIndexOfPrevious = int16(spriteList[i].palidx)
 						ip := plIndexOfPrevious + 1
 						for plSize == 0 && ip != plIndexOfPrevious {
 							ip = plIndexOfPrevious
@@ -1950,7 +1950,7 @@ func preloadSff(filename string, char bool, preloadSpr map[[2]uint16]bool) (*Sff
 			}
 			preloadRef[i] = true
 			if ok {
-				sff.sprites[[...]uint16{spriteList[i].Group, spriteList[i].Number}] = spriteList[i]
+				sff.sprites[[...]int16{spriteList[i].Group, spriteList[i].Number}] = spriteList[i]
 				preloadSprNum--
 				if preloadSprNum == 0 {
 					break
@@ -2049,14 +2049,14 @@ func (s *Sff) ReadPalette(f io.ReadSeeker, offset int64, size uint32) ([]uint32,
 	return pal, nil
 }
 
-func (s *Sff) GetSprite(g, n uint16) *Sprite {
+func (s *Sff) GetSprite(g, n int16) *Sprite {
 	if g == 0xFFFF {
 		return nil
 	}
-	return s.sprites[[2]uint16{g, n}]
+	return s.sprites[[2]int16{g, n}]
 }
 
-func (s *Sff) getOwnPalSprite(g, n uint16, pl *PaletteList) *Sprite {
+func (s *Sff) getOwnPalSprite(g, n int16, pl *PaletteList) *Sprite {
 	sys.runMainThreadTask() // Generate texture
 	sp := s.GetSprite(g, n)
 	if sp == nil {
