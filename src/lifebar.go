@@ -3045,12 +3045,23 @@ func (ro *LifeBarRound) act() bool {
 		ro.shutterTimer--
 	}
 
+	func (ro *LifeBarRound) callFight() {
+				ro.fight.Reset()
+				ro.fight_top.Reset()
+				ro.current = 1
+				ro.waitTimer[1] = ro.fight_time
+				ro.waitSoundTimer[1] = ro.fight_sndtime
+				ro.drawTimer[1] = 0
+				sys.timerCount = append(sys.timerCount, sys.matchTime)
+				ro.timerActive = true
+}
+
 	// Pre-intro
 	if sys.intro > ro.ctrl_time {
 		ro.current = 0
 		ro.waitTimer[0], ro.waitSoundTimer[0], ro.drawTimer[0] = ro.round_time, ro.round_sndtime, 0
 		ro.waitTimer[1] = ro.callfight_time
-	} else if (sys.intro >= 0 && !sys.tickNextFrame()) || sys.motif.di.active || ro.shutterTimer > 0 {
+	} else if (sys.intro >= 0 && !sys.tickNextFrame()) || sys.motif.di.active {
 		// Skip announcements during the middle of the round, "shuttertime" or dialogues
 		// Mugen ignores the "shuttertime" here, but that makes the round/fight announcement too abrupt
 		return false
@@ -3084,11 +3095,11 @@ func (ro *LifeBarRound) canSkipPhase(phase int) bool {
 func (ro *LifeBarRound) handleRoundIntro() {
 	// Previously skipping the char intros took us to the fight call, like Mugen
 	// Most games go to the round call instead so this was changed
-	//if sys.introSkipped && !sys.dialogueFlg {
-	//	ro.roundCallOver = true
-	//	ro.callFight()
-	//	sys.introSkipped = false
-	//}
+	if sys.introSkipped && !sys.dialogueFlg {
+		ro.roundCallOver = true
+		ro.callFight()
+		sys.introSkipped = false
+	}
 
 	// Skip round call
 	if sys.gsf(GSF_skiprounddisplay) {
