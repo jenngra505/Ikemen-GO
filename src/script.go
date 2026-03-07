@@ -900,7 +900,7 @@ func systemScriptInit(l *lua.LState) {
 		}
 		var spr *Sprite
 		if !nilArg(l, 3) {
-			spr = a.anim.sff.GetSprite(uint16(numArg(l, 2)), uint16(numArg(l, 3)))
+			spr = a.anim.sff.GetSprite(int16(numArg(l, 2)), int16(numArg(l, 3)))
 		} else {
 			spr = a.anim.spr
 		}
@@ -990,7 +990,7 @@ func systemScriptInit(l *lua.LState) {
 				if c.Group < 0 || c.Number < 0 {
 					continue
 				}
-				spr, ok := copyAnim.anim.sff.sprites[[2]uint16{uint16(c.Group), uint16(c.Number)}]
+				spr, ok := copyAnim.anim.sff.sprites[[2]int16{int16(c.Group), int16(c.Number)}]
 				if !ok || spr == nil {
 					continue
 				}
@@ -4101,7 +4101,7 @@ func systemScriptInit(l *lua.LState) {
 	})
 	luaRegister(l, "preloadListChar", func(*lua.LState) int {
 		if !nilArg(l, 2) {
-			sys.sel.charSpritePreload[[...]uint16{uint16(numArg(l, 1)), uint16(numArg(l, 2))}] = true
+			sys.sel.charSpritePreload[[...]int16{int16(numArg(l, 1)), int16(numArg(l, 2))}] = true
 		} else {
 			sys.sel.charAnimPreload[int32(numArg(l, 1))] = true
 		}
@@ -4109,7 +4109,7 @@ func systemScriptInit(l *lua.LState) {
 	})
 	luaRegister(l, "preloadListStage", func(*lua.LState) int {
 		if !nilArg(l, 2) {
-			sys.sel.stageSpritePreload[[...]uint16{uint16(numArg(l, 1)), uint16(numArg(l, 2))}] = true
+			sys.sel.stageSpritePreload[[...]int16{int16(numArg(l, 1)), int16(numArg(l, 2))}] = true
 		} else {
 			sys.sel.stageAnimPreload[int32(numArg(l, 1))] = true
 		}
