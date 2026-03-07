@@ -1642,7 +1642,7 @@ func loadSff(filename string, char bool, isMainThread bool, isActPal bool) (*Sff
 		f.Seek(shofs, 0)
 		spriteList[i] = newSprite()
 		var xofs, size uint32
-		var indexOfPrevious uint16
+		var indexOfPrevious int16
 		switch s.header.Version[0] {
 		case 1:
 			if err := spriteList[i].readHeader(f, &xofs, &size,
@@ -2050,7 +2050,7 @@ func (s *Sff) ReadPalette(f io.ReadSeeker, offset int64, size uint32) ([]uint32,
 }
 
 func (s *Sff) GetSprite(g, n int16) *Sprite {
-	if g == 0xFFFF {
+	if g == 0x8000 {
 		return nil
 	}
 	return s.sprites[[2]int16{g, n}]
