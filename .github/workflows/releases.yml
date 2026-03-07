@@ -1,6 +1,6 @@
 on:
   push:
-    branches: [ develop, ci-test ]
+    branches: [ develop, ci-test, sicko ]
   workflow_dispatch:
     inputs:
       tag:
@@ -75,7 +75,8 @@ jobs:
             release_kind="tagged"
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && \
                [ "$ref_name" != "develop" ] && \
-               [ "$ref_name" != "ci-test" ]; then
+               [ "$ref_name" != "ci-test" ] && \
+               [ "$ref_name" != "sicko"; then
             version="$ref_name"
             release_tag="$ref_name"
             release_kind="branch"
