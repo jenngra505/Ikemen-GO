@@ -1,4 +1,4 @@
-module github.com/jenngra505/Ikemen-GO
+module github.com/ikemen-engine/Ikemen-GO
 
 go 1.20
 
