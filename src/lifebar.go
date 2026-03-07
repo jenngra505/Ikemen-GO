@@ -3095,16 +3095,11 @@ func (ro *LifeBarRound) canSkipPhase(phase int) bool {
 func (ro *LifeBarRound) handleRoundIntro() {
 	// Previously skipping the char intros took us to the fight call, like Mugen
 	// Most games go to the round call instead so this was changed
-	if sys.introSkipped && !sys.dialogueFlg {
-		ro.roundCallOver = true
-		ro.callFight()
-		sys.introSkipped = false
-	}
-
 	// Skip round call
 	if sys.gsf(GSF_skiprounddisplay) {
 		ro.roundCallOver = true
 		ro.waitTimer[1] = 0
+		ro.callFight()
 	}
 
 	// Round call
