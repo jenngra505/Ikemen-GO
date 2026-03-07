@@ -676,8 +676,8 @@ func loadCharPalettes(sff *Sff, filename string, ref int) error {
 type Sprite struct {
 	Pal      []uint32
 	Tex      Texture
-	Group    uint16 // Group index: valid range 0–65535
-	Number   uint16 // Sprite index: valid range 0–65535
+	Group    int16 // Group index: valid range 0–65535
+	Number   int16 // Sprite index: valid range 0–65535
 	Size     [2]uint16
 	Offset   [2]int16
 	palidx   int
