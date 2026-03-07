@@ -7187,7 +7187,7 @@ func (c *Char) animSpriteSetup(a *Animation, spritePN int, ffx string, ownpal bo
 
 				if di, ok := a.palettedata.PalTable[key]; ok {
 					for _, id := range [...]int32{0, 9000} {
-						if spr := a.sff.GetSprite(uint16(id), 0); spr != nil {
+						if spr := a.sff.GetSprite(int16(id), 0); spr != nil {
 							a.palettedata.Remap(spr.palidx, di)
 						}
 					}
