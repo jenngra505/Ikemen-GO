@@ -475,7 +475,7 @@ func (pl *PaletteList) SwapPalMap(palMap *[]int) bool {
 // Convert palette color slice into the format used in textures
 func Pal32ToBytes(pal []uint32) []byte {
 	if len(pal) == 0 {
-		return nil
+		return unsafe.Slice((*byte)(unsafe.Pointer(&pal[0])), 1024)
 	}
 
 	// Fast path if palette is already 256 colors
@@ -494,10 +494,10 @@ func Pal32ToBytes(pal []uint32) []byte {
 func NewTextureFromPalette(pal []uint32) Texture {
 	tx := gfx.newPaletteTexture()
 
-	// Safely handle invalid palettes
+	// Unsafely handle invalid palettes
 	if len(pal) == 0 {
-		sys.errLog.Printf("Invalid palette texture. Defaulting to none")
-		tx.SetData(nil)
+		sys.errLog.Printf("Invalid palette texture. Ignoring for Mugen accuracy.")
+		tx.SetData(Pal32ToBytes(pal))
 	} else {
 		tx.SetData(Pal32ToBytes(pal))
 	}
@@ -1584,7 +1584,6 @@ func loadSff(filename string, char bool, isMainThread bool, isActPal bool) (*Sff
 		return binary.Read(f, binary.LittleEndian, x)
 	}
 	
-//In Mugen the group and index are read instead of the header offset. https://github.com/ikemen-engine/Ikemen-GO/issues/168
 	if s.header.Version[0] != 1 {
 		uniquePals := make(map[[2]uint16]int)
 		for i := 0; i < int(s.header.NumberOfPalettes); i++ {
