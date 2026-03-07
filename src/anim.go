@@ -582,7 +582,7 @@ func (a *Animation) UpdateSprite() {
 			}
 		}
 		if group >= 0 && number >= 0 {
-			a.spr = a.sff.GetSprite(uint16(group), uint16(number))
+			a.spr = a.sff.GetSprite(int16(group), int16(number))
 		} else {
 			a.spr = nil
 		}
@@ -1972,7 +1972,7 @@ func (a *Anim) Copy() *Anim {
 		if c.Group < 0 || c.Number < 0 {
 			continue // skip empty frames
 		}
-		key := [...]uint16{uint16(c.Group), uint16(c.Number)}
+		key := [...]int16{int16(c.Group), int16(c.Number)}
 		src, ok := srcSff.sprites[key]
 		if !ok || src == nil {
 			continue
@@ -2241,7 +2241,7 @@ func (pa PreloadedAnims) addAnim(anim *Animation, no int32) {
 	pa[[...]int32{no, -1}] = anim
 }
 
-func (pa PreloadedAnims) addSprite(sff *Sff, grp, idx uint16) {
+func (pa PreloadedAnims) addSprite(sff *Sff, grp, idx int16) {
 	if sff.GetSprite(grp, idx) == nil {
 		return
 	}
