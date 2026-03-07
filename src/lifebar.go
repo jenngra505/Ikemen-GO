@@ -3015,6 +3015,17 @@ func readLifeBarRound(is IniSection,
 	return ro
 }
 
+	func (ro *LifeBarRound) callFight() {
+				ro.fight.Reset()
+				ro.fight_top.Reset()
+				ro.current = 1
+				ro.waitTimer[1] = ro.fight_time
+				ro.waitSoundTimer[1] = ro.fight_sndtime
+				ro.drawTimer[1] = 0
+				sys.timerCount = append(sys.timerCount, sys.matchTime)
+				ro.timerActive = true
+}
+
 // Check is sys.intro timer should step
 func (ro *LifeBarRound) act() bool {
 	// Reset FightScreenState trigger flags
@@ -3044,17 +3055,6 @@ func (ro *LifeBarRound) act() bool {
 		}
 		ro.shutterTimer--
 	}
-
-	func (ro *LifeBarRound) callFight() {
-				ro.fight.Reset()
-				ro.fight_top.Reset()
-				ro.current = 1
-				ro.waitTimer[1] = ro.fight_time
-				ro.waitSoundTimer[1] = ro.fight_sndtime
-				ro.drawTimer[1] = 0
-				sys.timerCount = append(sys.timerCount, sys.matchTime)
-				ro.timerActive = true
-}
 
 	// Pre-intro
 	if sys.intro > ro.ctrl_time {
