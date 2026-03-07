@@ -890,7 +890,7 @@ func (s *Sprite) SetRaw(data []byte, sprWidth int32, sprHeight int32, sprDepth i
 	}
 }
 
-func (s *Sprite) readHeader(r io.Reader, ofs, size *uint32, link *uint16) error {
+func (s *Sprite) readHeader(r io.Reader, ofs, size *uint32, link *int16) error {
 	read := func(x interface{}) error {
 		return binary.Read(r, binary.LittleEndian, x)
 	}
@@ -1074,7 +1074,7 @@ func (s *Sprite) read(f io.ReadSeeker, sh *SffHeader, offset int64, datasize uin
 }
 
 func (s *Sprite) readHeaderV2(r io.Reader, ofs *uint32, size *uint32,
-	lofs uint32, tofs uint32, link *uint16) error {
+	lofs uint32, tofs uint32, link *int16) error {
 	read := func(x interface{}) error {
 		return binary.Read(r, binary.LittleEndian, x)
 	}
@@ -2050,7 +2050,7 @@ func (s *Sff) ReadPalette(f io.ReadSeeker, offset int64, size uint32) ([]uint32,
 }
 
 func (s *Sff) GetSprite(g, n int16) *Sprite {
-	if g == 0x8000 {
+	if g == 0x7fff {
 		return nil
 	}
 	return s.sprites[[2]int16{g, n}]
