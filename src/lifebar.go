@@ -3043,10 +3043,17 @@ func (ro *LifeBarRound) act() bool {
 		if ro.shutterTimer == (ro.shutter_time + 1) {
 			sys.introSkipCall = true
 			ro.fadeIn.timeRemaining = 0
-         if !sys.motif.di.active {
+         if !sys.motif.di.active && !sys.dialogueBarsFlg && sys.dialogueForce == 0 {
 		        ro.roundCallOver = true
                 ro.waitTimer[1] = 0
                 sys.intro = 1
+		    for i, p := range sys.chars {
+			        if len(p) > 0 {
+				        sys.clearPlayerAssets(i, false)
+				        p[0].posReset()
+				        p[0].selfState(0, -1, -1, 0, "")
+                    }
+			    }
             }
 		}
 		ro.shutterTimer--
@@ -3058,8 +3065,8 @@ func (ro *LifeBarRound) act() bool {
 		ro.waitTimer[0], ro.waitSoundTimer[0], ro.drawTimer[0] = ro.round_time, ro.round_sndtime, 0
 		ro.waitTimer[1] = ro.callfight_time
 	} else if (sys.intro >= 0 && !sys.tickNextFrame()) || sys.motif.di.active {
-		// Skip announcements during the middle of the round, "shuttertime" or dialogues
-		// Mugen ignores the "shuttertime" here, while abrupt Yu-Toharu's characters rely on this
+		// Skip announcements during the middle of the round or dialogues
+		// Mugen ignores the "shuttertime" here, while abrupt, Yu-Toharu's characters rely on this
 		return false
 	} else {
 		// Intro
