@@ -3043,10 +3043,10 @@ func (ro *LifeBarRound) act() bool {
 		if ro.shutterTimer == (ro.shutter_time + 1) {
 			sys.introSkipCall = true
 			ro.fadeIn.timeRemaining = 0
-    //TODO: Figure out why it still takes 60 frames before the word Fight shows up
          if !sys.motif.di.active {
 		        ro.roundCallOver = true
                 ro.waitTimer[1] = 0
+                sys.intro = 1
             }
 		}
 		ro.shutterTimer--
