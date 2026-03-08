@@ -3086,7 +3086,7 @@ func (ro *LifeBarRound) handleRoundIntro() {
 	// Most games go to the round call instead, so this was changed in normal IKEMEN
 	if sys.introSkipCall && !sys.dialogueBarsFlg {
 		sys.gsf(GSF_skiprounddisplay)
-		sys.introSkipcall = false
+		sys.introSkipCall = false
 	}
 	// Skip round call
 	if sys.gsf(GSF_skiprounddisplay) {
