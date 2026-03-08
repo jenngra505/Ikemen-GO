@@ -581,7 +581,11 @@ func (a *Animation) UpdateSprite() {
 				group, number = mn[0], mn[1]
 			}
 		}
+		if group != -1 && number != -1 {
 			a.spr = a.sff.GetSprite(int16(group), int16(number))
+		} else {
+			a.spr = nil
+		}
 	}
 	a.newframe, a.drawidx = false, a.curelem
 
