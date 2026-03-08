@@ -535,36 +535,6 @@ function main.f_formatBySpec(fmt, specMap)
 	return out
 end
 
---update rounds to win variables
-main.roundsNumSingle = {}
-main.roundsNumSimul = {}
-main.roundsNumTag = {}
-main.maxDrawGames = {}
-function main.f_updateRoundsNum()
-	for i = 1, 2 do
-		if gameOption('Options.Match.Wins') == -1 then
-			main.roundsNumSingle[i] = getMatchWins(i)
-		else
-			main.roundsNumSingle[i] = gameOption('Options.Match.Wins')
-		end
-		if gameOption('Options.Simul.Match.Wins') == -1 then
-			main.roundsNumSimul[i] = getMatchWins(i)
-		else
-			main.roundsNumSimul[i] = gameOption('Options.Simul.Match.Wins')
-		end
-		if gameOption('Options.Tag.Match.Wins') == -1 then
-			main.roundsNumTag[i] = getMatchWins(i)
-		else
-			main.roundsNumTag[i] = gameOption('Options.Tag.Match.Wins')
-		end
-		if gameOption('Options.Match.MaxDrawGames') == -2 then
-			main.maxDrawGames[i] = getMatchMaxDrawGames(i)
-		else
-			main.maxDrawGames[i] = gameOption('Options.Match.MaxDrawGames')
-		end
-	end
-end
-
 --refresh screen every 0.02 during initial loading
 main.nextRefresh = os.clock() + 0.02
 function main.f_loadingRefresh()
@@ -593,14 +563,18 @@ function main.f_commandLine()
 	local ref = #main.t_selChars
 	local t_teamMode = {0, 0}
 	local t_numChars = {0, 0}
-	local t_matchWins = {single = main.roundsNumSingle, simul = main.roundsNumSimul, tag = main.roundsNumTag, draw = main.maxDrawGames}
+	local t_matchWins = {
+		draw = {gameOption('Options.Match.MaxDrawGames'), gameOption('Options.Match.MaxDrawGames')},
+		simul = {gameOption('Options.Simul.Match.Wins'), gameOption('Options.Simul.Match.Wins')},
+		single = {gameOption('Options.Match.Wins'), gameOption('Options.Match.Wins')},
+		tag = {gameOption('Options.Tag.Match.Wins'), gameOption('Options.Tag.Match.Wins')},
+	}
 	local roundTime = gameOption('Options.Time')
 	if getCommandLineValue("-loadmotif") == nil then
 		loadLifebar()
 	end
 	setLifebarElements({guardbar = gameOption('Options.GuardBreak'), stunbar = gameOption('Options.Dizzy'), redlifebar = gameOption('Options.RedLife')})
 	local frames = fightscreenvar("time.framespercount")
-	main.f_updateRoundsNum()
 	local t = {}
 	local t_assignedPals = {}
 	local flags = getCommandLineFlags()
@@ -793,8 +767,6 @@ if gameOption('Debug.DumpLuaTables') then main.f_printTable(motif, "debug/loadMo
 
 loadLifebar()
 main.f_loadingRefresh()
-main.timeFramesPerCount = fightscreenvar("time.framespercount")
-main.f_updateRoundsNum()
 
 --warning display
 function main.f_warning(text, sec, background, overlay, titleData, textData, cancel_snd, done_snd)
@@ -834,11 +806,11 @@ function main.f_warning(text, sec, background, overlay, titleData, textData, can
 	end
 end
 
-function main.f_drawInput(textData, text, sec, background, overlay)
-	local input = ''
+function main.f_drawInput(textData, text, sec, background, overlay, defaultInput)
+	local input = defaultInput or ''
 	resetKey()
 	while true do
-		if esc() or getInput(-1, sec.menu.cancel.key) then
+		if esc() then
 			input = ''
 			break
 		end
@@ -1531,10 +1503,10 @@ function main.f_default()
 	main.luaPath = 'external/script/default.lua' --path to script executed by start.f_selectMode()
 	main.makeRoster = false --if default roster for each match should be generated before first match
 	main.matchWins = { --amount of rounds to win for each team side and team mode
-		draw = main.maxDrawGames,
-		simul = main.roundsNumSimul,
-		single = main.roundsNumSingle,
-		tag = main.roundsNumTag,
+		draw = {gameOption('Options.Match.MaxDrawGames'), gameOption('Options.Match.MaxDrawGames')},
+		simul = {gameOption('Options.Simul.Match.Wins'), gameOption('Options.Simul.Match.Wins')},
+		single = {gameOption('Options.Match.Wins'), gameOption('Options.Match.Wins')},
+		tag = {gameOption('Options.Tag.Match.Wins'), gameOption('Options.Tag.Match.Wins')},,
 	}
 	main.motif = { --which motif elements should be rendered
 		challenger = false,
@@ -1580,8 +1552,8 @@ function main.f_default()
 	setHomeTeam(2) --http://mugenguild.com/forum/topics/ishometeam-triggers-169132.0.html
 	setLifebarElements(main.lifebar)
 	setMotifElements(main.motif)
-	setRoundTime(math.max(-1, main.roundTime * main.timeFramesPerCount))
-	setTimeFramesPerCount(main.timeFramesPerCount)
+	setRoundTime(math.max(-1, main.roundTime * fightscreenvar("time.framespercount")))
+	setTimeFramesPerCount(fightscreenvar("time.framespercount"))
 	setWinCount(1, 0)
 	setWinCount(2, 0)
 	textImgReset(motif.select_info.title.TextSpriteData)
@@ -2609,6 +2581,68 @@ function main.f_clearShuffleTables()
 	start.lastStageIdx = nil
 end
 
+function main.f_deleteReplay(item, t)
+	if t[item] == nil or t[item].itemname == 'back' or not t[item].itemname:match('%.replay$') then
+		return t, item
+	end
+
+	local ok, err = os.remove(t[item].itemname)
+	if not ok then
+		print('Unable to delete replay: ' .. t[item].itemname .. (err and ' (' .. tostring(err) .. ')' or ''))
+		return t, item
+	end
+
+	sndPlay(motif.Snd, motif.replay_info.cancel.snd[1], motif.replay_info.cancel.snd[2])
+	resetKey()
+	table.remove(t, item)
+	item = math.max(1, math.min(item, #t))
+	return t, item
+end
+
+function main.f_renameReplay(item, t)
+	if t[item] == nil or t[item].itemname == 'back' or not t[item].itemname:match('%.replay$') then
+		return t, item
+	end
+	local oldPath, oldName, ext = t[item].itemname:match('^(.-)([^\\/]+)%.([^%.\\/]-)$')
+	if oldPath == nil or oldName == nil or ext == nil then
+		return t, item
+	end
+	sndPlay(motif.Snd, motif.replay_info.cursor.move.snd[1], motif.replay_info.cursor.move.snd[2])
+	local newName = main.f_drawInput(
+		motif.title_info.textinput.TextSpriteData,
+		motif.title_info.textinput.text.replay,
+		motif.replay_info,
+		motif.replaybgdef,
+		motif.title_info.textinput.overlay.RectData,
+		oldName
+	)
+	newName = (newName or ''):match('^%s*(.-)%s*$')
+	newName = newName:gsub('%.[Rr][Ee][Pp][Ll][Aa][Yy]$', '')
+	if newName == '' or newName == oldName then
+		sndPlay(motif.Snd, motif.replay_info.cancel.snd[1], motif.replay_info.cancel.snd[2])
+		return t, item
+	end
+	if newName:match('[\\/:%*%?"<>|]') then
+		sndPlay(motif.Snd, motif.replay_info.cancel.snd[1], motif.replay_info.cancel.snd[2])
+		return t, item
+	end
+	local newFile = oldPath .. newName .. '.' .. ext
+	if main.f_fileExists(newFile) then
+		sndPlay(motif.Snd, motif.replay_info.cancel.snd[1], motif.replay_info.cancel.snd[2])
+		return t, item
+	end
+	local ok, err = os.rename(t[item].itemname, newFile)
+	if not ok then
+		print('Unable to rename replay: ' .. t[item].itemname .. ' -> ' .. newFile .. (err and ' (' .. tostring(err) .. ')' or ''))
+		sndPlay(motif.Snd, motif.replay_info.cancel.snd[1], motif.replay_info.cancel.snd[2])
+		return t, item
+	end
+	sndPlay(motif.Snd, motif.replay_info.cursor.done.snd[1], motif.replay_info.cursor.done.snd[2])
+	t[item].itemname = newFile
+	t[item].displayname = newName
+	return t, item
+end
+
 --replay menu
 function main.f_replay()
 	local w = main.f_menuWindow(motif.replay_info.menu)
@@ -2657,6 +2691,15 @@ function main.f_replay()
 			sndPlay(motif.Snd, motif.replay_info.cancel.snd[1], motif.replay_info.cancel.snd[2])
 			main.f_fadeReset('fadeout', motif.replay_info)
 			main.close = true
+		elseif getKey('DELETE') then
+			t, item = main.f_deleteReplay(item, t)
+			local visibleItems = motif.replay_info.menu.window.visibleitems
+			if visibleItems == nil or visibleItems <= 0 then
+				visibleItems = #t
+			end
+			cursorPosY = math.max(1, math.min(cursorPosY, item, visibleItems))
+		elseif getKey('SPACE') then
+			t, item = main.f_renameReplay(item, t)
 		elseif getInput(-1, motif[main.group].menu.done.key) then
 			sndPlay(motif.Snd, motif[main.group].cursor.done.snd.default[1], motif[main.group].cursor.done.snd.default[2])
 			enterReplay(t[item].itemname)

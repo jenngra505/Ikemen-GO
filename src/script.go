@@ -1909,6 +1909,7 @@ func systemScriptInit(l *lua.LState) {
 			sys.replayFile.Close()
 			sys.replayFile = nil
 		}
+		sys.uiResetTokenGuard()
 		return 0
 	})
 	//luaRegister(l, "fadeInActive", func(*lua.LState) int {
@@ -2926,22 +2927,6 @@ func systemScriptInit(l *lua.LState) {
 		} else {
 			l.Push(lua.LNumber(-1))
 		}
-		return 1
-	})
-	luaRegister(l, "getMatchMaxDrawGames", func(l *lua.LState) int {
-		tn := int(numArg(l, 1))
-		if tn < 1 || tn > 2 {
-			l.RaiseError("\nInvalid team side: %v\n", tn)
-		}
-		l.Push(lua.LNumber(sys.lifebar.ro.match_maxdrawgames[tn-1]))
-		return 1
-	})
-	luaRegister(l, "getMatchWins", func(l *lua.LState) int {
-		tn := int(numArg(l, 1))
-		if tn < 1 || tn > 2 {
-			l.RaiseError("\nInvalid team side: %v\n", tn)
-		}
-		l.Push(lua.LNumber(sys.lifebar.ro.match_wins[tn-1]))
 		return 1
 	})
 	luaRegister(l, "getRemapInput", func(l *lua.LState) int {
