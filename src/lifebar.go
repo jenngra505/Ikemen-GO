@@ -3038,9 +3038,16 @@ func (ro *LifeBarRound) act() bool {
 		// Signal system to skip intros when shutter is about to be fully closed
 		// This ensures the intros will skip even if/when the shutter updates at a different rate than characters
 		// https://github.com/ikemen-engine/Ikemen-GO/issues/2720
+	// Skipping the char intros should take us to the fight call, like Mugen
+	// Most games go to the round call instead, so this was changed in normal IKEMEN
 		if ro.shutterTimer == (ro.shutter_time + 1) {
 			sys.introSkipCall = true
 			ro.fadeIn.timeRemaining = 0
+    //TODO: Figure out why it still takes 60 frames before the word Fight shows up
+         if !sys.motif.di.active {
+		        ro.roundCallOver = true
+                ro.waitTimer[1] = 0
+            }
 		}
 		ro.shutterTimer--
 	}
@@ -3052,7 +3059,7 @@ func (ro *LifeBarRound) act() bool {
 		ro.waitTimer[1] = ro.callfight_time
 	} else if (sys.intro >= 0 && !sys.tickNextFrame()) || sys.motif.di.active {
 		// Skip announcements during the middle of the round, "shuttertime" or dialogues
-		// Mugen ignores the "shuttertime" here, but that makes the round/fight announcement too abrupt
+		// Mugen ignores the "shuttertime" here, while abrupt Yu-Toharu's characters rely on this
 		return false
 	} else {
 		// Intro
@@ -3082,12 +3089,6 @@ func (ro *LifeBarRound) canSkipPhase(phase int) bool {
 
 // Consists of round and fight calls
 func (ro *LifeBarRound) handleRoundIntro() {
-	// Skipping the char intros should take us to the fight call, like Mugen
-	// Most games go to the round call instead, so this was changed in normal IKEMEN
-	if sys.introSkipCall && !sys.dialogueBarsFlg {
-		sys.gsf(GSF_skiprounddisplay)
-		sys.introSkipCall = false
-	}
 	// Skip round call
 	if sys.gsf(GSF_skiprounddisplay) {
 		ro.roundCallOver = true
@@ -3193,7 +3194,7 @@ func (ro *LifeBarRound) handleRoundIntro() {
 	if !ro.fightCallOver {
 		if ro.current == 0 {
 			if ro.waitTimer[1] == 0 {
-			//This used to be CallFight
+                // This used to be callFight()
 				ro.fight.Reset()
 				ro.fight_top.Reset()
 				ro.current = 1
