@@ -3015,17 +3015,6 @@ func readLifeBarRound(is IniSection,
 	return ro
 }
 
-	func (ro *LifeBarRound) callFight() {
-				ro.fight.Reset()
-				ro.fight_top.Reset()
-				ro.current = 1
-				ro.waitTimer[1] = ro.fight_time
-				ro.waitSoundTimer[1] = ro.fight_sndtime
-				ro.drawTimer[1] = 0
-				sys.timerCount = append(sys.timerCount, sys.matchTime)
-				ro.timerActive = true
-}
-
 // Check is sys.intro timer should step
 func (ro *LifeBarRound) act() bool {
 	// Reset FightScreenState trigger flags
@@ -3093,11 +3082,11 @@ func (ro *LifeBarRound) canSkipPhase(phase int) bool {
 
 // Consists of round and fight calls
 func (ro *LifeBarRound) handleRoundIntro() {
-	// Previously skipping the char intros took us to the fight call, like Mugen
-	// Most games go to the round call instead so this was changed
+	// Skipping the char intros should take us to the fight call, like Mugen
+	// Most games go to the round call instead, so this was changed in normal IKEMEN
 	if sys.introSkipCall && !sys.dialogueBarsFlg {
 		ro.roundCallOver = true
-		ro.callFight()
+		ro.waitTimer[1] = 0
 		sys.introSkipCall = false
 	}
 	// Skip round call
@@ -3205,7 +3194,15 @@ func (ro *LifeBarRound) handleRoundIntro() {
 	if !ro.fightCallOver {
 		if ro.current == 0 {
 			if ro.waitTimer[1] == 0 {
-				ro.callFight()
+			//This used to be CallFight
+				ro.fight.Reset()
+				ro.fight_top.Reset()
+				ro.current = 1
+				ro.waitTimer[1] = ro.fight_time
+				ro.waitSoundTimer[1] = ro.fight_sndtime
+				ro.drawTimer[1] = 0
+				sys.timerCount = append(sys.timerCount, sys.matchTime)
+				ro.timerActive = true
 			}
 			ro.waitTimer[1]--
 		} else if !ro.fightCallOver {
