@@ -3085,8 +3085,8 @@ func (ro *LifeBarRound) handleRoundIntro() {
 	// Skipping the char intros should take us to the fight call, like Mugen
 	// Most games go to the round call instead, so this was changed in normal IKEMEN
 	if sys.introSkipCall && !sys.dialogueBarsFlg {
-		sys.gsf(GSF_skiprounddisplay) = true
-		introSkipcall = false
+		sys.gsf(GSF_skiprounddisplay)
+		sys.introSkipcall = false
 	}
 	// Skip round call
 	if sys.gsf(GSF_skiprounddisplay) {
