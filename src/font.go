@@ -55,7 +55,7 @@ const (
 
 // FntCharImage stores sprite and position
 type FntCharImage struct {
-	ofs, w uint16
+	ofs, w int16
 	img    []Sprite
 }
 
@@ -75,7 +75,7 @@ type Fnt struct {
 	ver, ver2   uint16
 	Type        string
 	BankType    string
-	Size        [2]uint16
+	Size        [2]int16
 	Spacing     [2]int32
 	colors      int32
 	offset      [2]int32
@@ -208,7 +208,7 @@ func loadFntV1(filename string) (*Fnt, error) {
 			if mapflg {
 				mapflg = false
 				re := regexp.MustCompile(`(\S+)(?:\s+(\S+)(?:\s+(\S+))?)?`)
-				ofs := uint16(0)
+				ofs := int16(0)
 				w := int32(0)
 				for ; i < len(lines); i++ {
 					if len(lines[i]) > 0 && lines[i][0] == '[' {
@@ -233,17 +233,17 @@ func loadFntV1(filename string) (*Fnt, error) {
 							c = rune(cap[1][0])
 						}
 						if len(cap[2]) > 0 {
-							ofs = I32ToU16(Atoi(cap[2]))
+							ofs = I32ToI16(Atoi(cap[2]))
 						}
 						fci := &FntCharImage{ofs: ofs}
 						f.images[0][c] = fci
 						if len(cap[3]) > 0 {
 							w = Atoi(cap[3])
 							if w < 0 {
-								ofs += I32ToU16(int32(ofs) - w)
+								ofs += I32ToI16(int32(ofs) - w)
 								w = 0 - w
 							}
-							fci.w = I32ToU16(w)
+							fci.w = I32ToI16(w)
 							ofs += fci.w - f.Size[0]
 						} else {
 							fci.w = f.Size[0]
@@ -337,10 +337,10 @@ func loadDefInfo(f *Fnt, filename string, is IniSection, height int32) {
 	}
 	ary := SplitAndTrim(is["size"], ",")
 	if len(ary[0]) > 0 {
-		f.Size[0] = I32ToU16(Atoi(ary[0]))
+		f.Size[0] = I32ToI16(Atoi(ary[0]))
 	}
 	if len(ary) > 1 && len(ary[1]) > 0 {
-		f.Size[1] = I32ToU16(Atoi(ary[1]))
+		f.Size[1] = I32ToI16(Atoi(ary[1]))
 	}
 	ary = SplitAndTrim(is["spacing"], ",")
 	if len(ary[0]) > 0 {
@@ -386,8 +386,8 @@ func LoadFntSff(f *Fnt, fontfile string, filename string) {
 			if pal_default == nil && sff.header.Version[0] == 1 {
 				pal_default = s.Pal
 			}
-			offsetX := uint16(s.Offset[0])
-			sizeX := uint16(s.Size[0])
+			offsetX := int16(s.Offset[0])
+			sizeX := int16(s.Size[0])
 
 			fci := &FntCharImage{
 				ofs: offsetX,
@@ -405,13 +405,13 @@ func LoadFntSff(f *Fnt, fontfile string, filename string) {
 	var idef int
 	for i := 0; i < int(sff.header.NumberOfPalettes); i++ {
 		var pal []uint32
-		si, ok := sff.palList.PalTable[[...]uint16{0, uint16(i)}]
+		si, ok := sff.palList.PalTable[[...]int16{0, int16(i)}]
 		if ok && si >= 0 {
 			pal = sff.palList.Get(si)
 			if i == 0 {
 				idef = si
 			}
-			switch sff.palList.numcols[[...]uint16{0, uint16(i)}] {
+			switch sff.palList.numcols[[...]int16{0, int16(i)}] {
 			case 256:
 				f.coldepth[i] = 8
 			case 32:
@@ -638,7 +638,7 @@ func (f *Fnt) DrawText(txt string, x, y, xscl, yscl, rxadd float32,
 	rp := RenderParams{
 		tex:            nil,
 		paltex:         nil,
-		size:           [2]uint16{0, 0},
+		size:           [2]int16{0, 0},
 		x:              0,
 		y:              0,
 		tile:           notiling,
