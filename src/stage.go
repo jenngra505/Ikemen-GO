@@ -702,9 +702,9 @@ func (bg backGround) draw(pos [2]float32, drawscl, bgscl, stglscl float32,
 			//	w /= sys.widthScale
 			//	h /= sys.heightScale
 			//}
-			bg.anim.spr.Size = [2]uint16{
-				uint16(math.Ceil(float64(w))),
-				uint16(math.Ceil(float64(h))),
+			bg.anim.spr.Size = [2]int16{
+				int16(math.Ceil(float64(w))),
+				int16(math.Ceil(float64(h))),
 			}
 
 			bg.anim.scale_x = 1
@@ -1786,7 +1786,7 @@ func (s *Stage) runBgCtrl(bgc *bgCtrl) {
 	case BT_RemapPal:
 		if bgc.src[0] >= 0 && bgc.src[1] >= 0 && bgc.dst[1] >= 0 {
 			// Get source pal
-			si, ok := s.sff.palList.PalTable[[...]uint16{uint16(bgc.src[0]), uint16(bgc.src[1])}]
+			si, ok := s.sff.palList.PalTable[[...]int16{int16(bgc.src[0]), int16(bgc.src[1])}]
 			if !ok || si < 0 {
 				return
 			}
@@ -1796,7 +1796,7 @@ func (s *Stage) runBgCtrl(bgc *bgCtrl) {
 				di = si
 			} else {
 				// Get dest pal
-				di, ok = s.sff.palList.PalTable[[...]uint16{uint16(bgc.dst[0]), uint16(bgc.dst[1])}]
+				di, ok = s.sff.palList.PalTable[[...]int16{int16(bgc.dst[0]), int16(bgc.dst[1])}]
 				if !ok || di < 0 {
 					return
 				}
