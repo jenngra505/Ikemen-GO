@@ -64,7 +64,7 @@ type FontProperties struct {
 	Font    string    `ini:"" lua:"font" lookup:"def,font/,,data/"`
 	Height  int32     `ini:"height" default:"-1"`
 	Type    string    `ini:"type"`
-	Size    [2]uint16 `ini:"size"`
+	Size    [2]int16 `ini:"size"`
 	Spacing [2]int32  `ini:"spacing"`
 	Offset  [2]int32  `ini:"offset"`
 }
