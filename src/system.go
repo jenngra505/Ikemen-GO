@@ -5099,8 +5099,8 @@ func (l *Loader) prepareTurnsFaces(pn int, fa *LifeBarFace, nm *LifeBarName, tea
 		// They won't be unless the select screen used "applypal" (or if the character was already used before maybe)
 		// https://github.com/ikemen-engine/Ikemen-GO/issues/3300
 		palIdx := sys.sel.selected[pn&1][i][1]
-		_, hasTarget := sc.sff.palList.PalTable[[...]int16{1, int16(palIdx)}]
-		_, has11 := sc.sff.palList.PalTable[[...]int16{1, 1}]
+		_, hasTarget := sc.sff.palList.PalTable[[...]uint16{1, uint16(palIdx)}]
+		_, has11 := sc.sff.palList.PalTable[[...]uint16{1, 1}]
 
 		// Only load palettes if necessary
 		if !hasTarget || !has11 {
@@ -5119,7 +5119,7 @@ func (l *Loader) prepareTurnsFaces(pn int, fa *LifeBarFace, nm *LifeBarName, tea
 		// Check if the sprite uses or shares palette 1, 1
 		usesPal11 := false
 		if spr.coldepth <= 8 {
-			pal11Idx, ok := sc.sff.palList.PalTable[[...]int16{1, 1}]
+			pal11Idx, ok := sc.sff.palList.PalTable[[...]uint16{1, 1}]
 			if ok && spr.palidx >= 0 && int(spr.palidx) < len(sc.sff.palList.paletteMap) && pal11Idx < len(sc.sff.palList.paletteMap) {
 				if sc.sff.palList.paletteMap[spr.palidx] == sc.sff.palList.paletteMap[pal11Idx] {
 					usesPal11 = true
