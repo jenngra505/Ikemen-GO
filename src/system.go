@@ -5038,7 +5038,7 @@ func (l *Loader) prepareTurnsFaces(pn int, fa *LifeBarFace, nm *LifeBarName, tea
 		fa.teammate_scale[i] = sc.portraitscale * 320 / float32(sc.localcoord[0])
 
 		// Get the sprite from the teammate's SFF
-		origSpr := sc.sff.GetSprite(uint16(fa.teammate_face_spr[0]), uint16(fa.teammate_face_spr[1]))
+		origSpr := sc.sff.GetSprite(int16(fa.teammate_face_spr[0]), int16(fa.teammate_face_spr[1]))
 		if origSpr == nil {
 			continue
 		}
