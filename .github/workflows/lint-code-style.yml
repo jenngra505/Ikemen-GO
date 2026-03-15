@@ -1,7 +1,7 @@
 on:
   workflow_dispatch:
   push:
-    branches: [ develop, release ]
+    branches: [ develop, release, sicko ]
   #pull_request_target:
   #  branches: [ develop, release ]
 

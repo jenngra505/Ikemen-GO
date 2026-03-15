@@ -134,12 +134,13 @@ func ReadAnimFrame(line string) *AnimFrame {
 	}
 
 	// Read X scale
-	// In Mugen 1.1 a blank parameter means 0
-	// In Ikemen it means no change, like the other optional parameters
+	// In Mugen 1.1 a blank parameter means 0, unlike the other optional parameters
 	if len(ary) >= 8 {
 		if IsNumeric(ary[7]) {
 			af.Xscale = float32(Atof(ary[7]))
-		}
+		} else {
+            af.Xscale = 0        
+        }
 	}
 
 	// Read Y scale
@@ -581,8 +582,8 @@ func (a *Animation) UpdateSprite() {
 				group, number = mn[0], mn[1]
 			}
 		}
-		if group >= 0 && number >= 0 {
-			a.spr = a.sff.GetSprite(uint16(group), uint16(number))
+		if group != -1 && number != -1 {
+			a.spr = a.sff.GetSprite(int16(group), int16(number))
 		} else {
 			a.spr = nil
 		}
@@ -1972,7 +1973,7 @@ func (a *Anim) Copy() *Anim {
 		if c.Group < 0 || c.Number < 0 {
 			continue // skip empty frames
 		}
-		key := [...]uint16{uint16(c.Group), uint16(c.Number)}
+		key := [...]int16{int16(c.Group), int16(c.Number)}
 		src, ok := srcSff.sprites[key]
 		if !ok || src == nil {
 			continue
@@ -2241,7 +2242,7 @@ func (pa PreloadedAnims) addAnim(anim *Animation, no int32) {
 	pa[[...]int32{no, -1}] = anim
 }
 
-func (pa PreloadedAnims) addSprite(sff *Sff, grp, idx uint16) {
+func (pa PreloadedAnims) addSprite(sff *Sff, grp, idx int16) {
 	if sff.GetSprite(grp, idx) == nil {
 		return
 	}

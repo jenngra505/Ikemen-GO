@@ -1,6 +1,6 @@
 on:
   pull_request_target:
-    branches: [ develop, release ]
+    branches: [ develop, release, sicko ]
     types: [ opened, edited, reopened, synchronize ]
 
 permissions: write-all

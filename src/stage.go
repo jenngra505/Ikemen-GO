@@ -431,8 +431,8 @@ func readBackGround(is IniSection, link *backGround,
 		if bg.actionno < 0 && len(bg.anim.frames) > 0 {
 			group := bg.anim.frames[0].Group
 			number := bg.anim.frames[0].Number
-			if group >= 0 && number >= 0 {
-				if spr := sff.GetSprite(uint16(group), uint16(number)); spr != nil {
+			if group != -1 && number != -1 {
+				if spr := sff.GetSprite(int16(group), int16(number)); spr != nil {
 					bg.anim.tile.xspacing += int32(spr.Size[0])
 					bg.anim.tile.yspacing += int32(spr.Size[1])
 				}
@@ -702,9 +702,9 @@ func (bg backGround) draw(pos [2]float32, drawscl, bgscl, stglscl float32,
 			//	w /= sys.widthScale
 			//	h /= sys.heightScale
 			//}
-			bg.anim.spr.Size = [2]uint16{
-				uint16(math.Ceil(float64(w))),
-				uint16(math.Ceil(float64(h))),
+			bg.anim.spr.Size = [2]int16{
+				int16(math.Ceil(float64(w))),
+				int16(math.Ceil(float64(h))),
 			}
 
 			bg.anim.scale_x = 1
