@@ -495,7 +495,7 @@ func NewTextureFromPalette(pal []uint32) Texture {
 
 	// Unsafely handle invalid palettes
 	if len(pal) == 0 {
-		sys.errLog.Printf("Invalid palette texture. Ignoring for Mugen accuracy.")
+		LogMessage("Invalid palette texture. Ignoring for Mugen accuracy.")
 	} 
 		tx.SetData(Pal32ToBytes(pal))
 
