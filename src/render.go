@@ -189,7 +189,7 @@ var notiling = Tiling{}
 type RenderParams struct {
 	tex            Texture // Sprite
 	paltex         Texture // Palette
-	size           [2]uint16
+	size           [2]int16
 	x, y           float32 // Position
 	tile           Tiling
 	xts, xbs       float32 // Top and bottom X scale (as in parallax)

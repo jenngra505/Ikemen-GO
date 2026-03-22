@@ -1726,7 +1726,7 @@ func readLifeBarFace(pre string, is IniSection, sff *Sff, at AnimationTable) *Li
 	is.ReadI32(pre+"teammate.face.spr", &fa.teammate_face_spr[0],
 		&fa.teammate_face_spr[1])
 	if fa.teammate_face_spr[0] != -1 {
-		sys.sel.charSpritePreload[[...]uint16{uint16(fa.teammate_face_spr[0]), uint16(fa.teammate_face_spr[1])}] = true
+		sys.sel.charSpritePreload[[...]int16{int16(fa.teammate_face_spr[0]), int16(fa.teammate_face_spr[1])}] = true
 	}
 	fa.teammate_face_lay = *ReadLayout(pre+"teammate.face.", is, 0)
 	is.ReadBool(pre+"teammate.ko.hide", &fa.teammate_ko_hide)
@@ -1749,7 +1749,7 @@ func (fa *LifeBarFace) step(ref int, refFace *LifeBarFace) {
 	// Update sprite only when necessary
 	if refFace.old_spr[0] != group || refFace.old_spr[1] != number ||
 		refFace.old_pal[0] != sys.cgi[ref].remappedpal[0] || refFace.old_pal[1] != sys.cgi[ref].remappedpal[1] {
-		refFace.face = sys.cgi[ref].sff.getOwnPalSprite(uint16(group), uint16(number), &sys.cgi[ref].palettedata.palList)
+		refFace.face = sys.cgi[ref].sff.getOwnPalSprite(int16(group), int16(number), &sys.cgi[ref].palettedata.palList)
 		refFace.old_spr = [...]int32{group, number}
 		refFace.old_pal = [...]int32{sys.cgi[ref].remappedpal[0], sys.cgi[ref].remappedpal[1]}
 	}
@@ -3102,9 +3102,23 @@ func (ro *LifeBarRound) act() bool {
 		// Signal system to skip intros when shutter is about to be fully closed
 		// This ensures the intros will skip even if/when the shutter updates at a different rate than characters
 		// https://github.com/ikemen-engine/Ikemen-GO/issues/2720
+	// Skipping the char intros should take us to the fight call, like Mugen
+	// Most games go to the round call instead, so this was changed in normal IKEMEN
 		if ro.shutterTimer == (ro.shutter_time + 1) {
 			sys.introSkipCall = true
 			ro.fadeIn.timeRemaining = 0
+         if !sys.motif.di.active && !sys.dialogueBarsFlg && sys.dialogueForce == 0 {
+		        ro.roundCallOver = true
+                ro.waitTimer[1] = 0
+                sys.intro = 1
+		    for i, p := range sys.chars {
+			        if len(p) > 0 {
+				        sys.clearPlayerAssets(i, false)
+				        p[0].posReset()
+				        p[0].selfState(0, -1, -1, 0, "")
+                    }
+			    }
+            }
 		}
 		ro.shutterTimer--
 	}
@@ -3114,9 +3128,9 @@ func (ro *LifeBarRound) act() bool {
 		ro.current = 0
 		ro.waitTimer[0], ro.waitSoundTimer[0], ro.drawTimer[0] = ro.round_time, ro.round_sndtime, 0
 		ro.waitTimer[1] = ro.callfight_time
-	} else if (sys.intro >= 0 && !sys.tickNextFrame()) || sys.motif.di.active || ro.shutterTimer > 0 {
-		// Skip announcements during the middle of the round, "shuttertime" or dialogues
-		// Mugen ignores the "shuttertime" here, but that makes the round/fight announcement too abrupt
+	} else if (sys.intro >= 0 && !sys.tickNextFrame()) || sys.motif.di.active {
+		// Skip announcements during the middle of the round or dialogues
+		// Mugen ignores the "shuttertime" here, while abrupt, Yu-Toharu's characters rely on this
 		return false
 	} else {
 		// Intro
@@ -3146,14 +3160,6 @@ func (ro *LifeBarRound) canSkipPhase(phase int) bool {
 
 // Consists of round and fight calls
 func (ro *LifeBarRound) handleRoundIntro() {
-	// Previously skipping the char intros took us to the fight call, like Mugen
-	// Most games go to the round call instead so this was changed
-	//if sys.introSkipped && !sys.dialogueFlg {
-	//	ro.roundCallOver = true
-	//	ro.callFight()
-	//	sys.introSkipped = false
-	//}
-
 	// Skip round call
 	if sys.gsf(GSF_skiprounddisplay) {
 		ro.roundCallOver = true
@@ -3259,7 +3265,7 @@ func (ro *LifeBarRound) handleRoundIntro() {
 	if !ro.fightCallOver {
 		if ro.current == 0 {
 			if ro.waitTimer[1] == 0 {
-				// This used to be callFight()
+                // This used to be callFight()
 				ro.fight.Reset()
 				ro.fight_top.Reset()
 				ro.current = 1
