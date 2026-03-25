@@ -1373,8 +1373,8 @@ func (ats *AnimTextSnd) HasDrawable() bool {
 	return hasAnim || hasText
 }
 
-// In Mugen this returns true if the animation ends before "displaytime" is over
-// It seems like the current Ikemen behavior makes more sense however
+// TODO: In Mugen this returns true if the animation ends before "displaytime" is over
+// This was intentionally changed in Ikemen
 // https://github.com/ikemen-engine/Ikemen-GO/issues/1150
 func (ats *AnimTextSnd) End(dt int32, inf bool) bool {
 	anim := ats.animLayout.anim
