@@ -7921,7 +7921,7 @@ func (c *Char) numStageBG(id BytecodeValue) BytecodeValue {
 func (c *Char) getTarget(id int32, idx int) []int32 {
 	// If ID and index are -1, just return all targets
 	// In Mugen the ID must be specifically -1
-	if id = -1 && idx = -1 {
+	if id == -1 && idx == -1 {
 		return c.targets
 	}
 
@@ -11128,6 +11128,8 @@ func (c *Char) hitResultCheck(getter *Char, proj *Projectile) (hitResult int32) 
 			sys.envShake.dir = hd.envshake_dir * float32(math.Pi) / 180
 			sys.envShake.setDefaultPhase()
 		}
+		getterNextPos := (getter.pos[0] + getter.vel[0]*getter.facing) * getter.localscl
+		getterCornered := getterNextPos <= sys.xmin || getterNextPos >= sys.xmax
 		// Cornerpush on hit
 		// In Mugen it is only set if the enemy is already in the corner before the hit
 		if hitResult > 0 && !isProjectile && getter.isPlayerType() && getterCornered {
