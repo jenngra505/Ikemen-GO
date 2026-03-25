@@ -951,7 +951,7 @@ func (s *System) anyHardButton() bool {
 
 // Joysticks were already refactored to be polled less times, but having these functions still makes them be polled twice as often during intros/outros
 // We're already polling them about 10 times less so that should be enough anyway
-// In Mugen, intro/outro skipping only happens on button press, not button hold
+// TODO: In Mugen, intro/outro skipping only happens on button press, not button hold
 func (s *System) anyHardButton() bool {
 	// Button indices for a, b, c, x, y, z
 	hardButtonIdx := []int{4, 5, 6, 7, 8, 9}
