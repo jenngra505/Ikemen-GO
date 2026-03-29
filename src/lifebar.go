@@ -3144,8 +3144,8 @@ func (ro *LifeBarRound) act() bool {
 			sys.introSkipCall = true
 			ro.fadeIn.timeRemaining = 0
          if !sys.motif.di.active && !sys.dialogueBarsFlg && sys.dialogueForce == 0 {
-		        ro.roundCallOver = true
-                ro.waitTimer[1] = 0
+		        ro.roundDisplayEnded = true
+                ro.fightDisplayTimer = ro.callfight_time
                 sys.intro = 1
 		    for i, p := range sys.chars {
 			        if len(p) > 0 {
