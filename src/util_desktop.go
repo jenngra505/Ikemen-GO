@@ -42,7 +42,7 @@ func LoadFntTtf(f *Fnt, fontfile string, filename string, height int32) {
 	if height == -1 {
 		height = int32(f.Size[1])
 	} else {
-		f.Size[1] = uint16(height)
+		f.Size[1] = int16(height)
 	}
 	ttf, err := gfxFont.LoadFont(fileDir, height, int(sys.gameWidth), int(sys.gameHeight))
 	if err != nil {

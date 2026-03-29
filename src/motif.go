@@ -64,7 +64,7 @@ type FontProperties struct {
 	Font    string    `ini:"" lua:"font" lookup:"def,font/,,data/"`
 	Height  int32     `ini:"height" default:"-1"`
 	Type    string    `ini:"type"`
-	Size    [2]uint16 `ini:"size"`
+	Size    [2]int16 `ini:"size"`
 	Spacing [2]int32  `ini:"spacing"`
 	Offset  [2]int32  `ini:"offset"`
 }
@@ -6317,7 +6317,7 @@ func (vi *MotifVictory) draw(m *Motif, layerno int16) {
 // buildSingleFrameFromSFF creates a 1-frame Animation from a raw sprite (grp, idx).
 // Used when a motif references .spr (group/index) and the preloaded table lacks it.
 func buildSingleFrameFromSFF(sff *Sff, grp, idx int32) *Animation {
-	if sff == nil || sff.GetSprite(uint16(grp), uint16(idx)) == nil {
+	if sff == nil || sff.GetSprite(int16(grp), int16(idx)) == nil {
 		return nil
 	}
 	anim := newAnimation(sff, &sff.palList)
@@ -6383,7 +6383,7 @@ func victoryPortraitAnim(m *Motif, sc *SelectChar, slot string,
 		} else {
 			// Detailed failure logs for the first requested pair
 			if ownerC != nil && ownerC.playerNo >= 0 && ownerC.playerNo < len(sys.cgi) && sys.cgi[ownerC.playerNo].sff != nil {
-				if sys.cgi[ownerC.playerNo].sff.GetSprite(uint16(spr[0]), uint16(spr[1])) == nil {
+				if sys.cgi[ownerC.playerNo].sff.GetSprite(int16(spr[0]), int16(spr[1])) == nil {
 					//fmt.Printf("[Victory] slot=%s -> FAILED to build 1-frame anim: sprite not in SFF (spr=%d,%d)\n", slot, spr[0], spr[1])
 				}
 			} else {

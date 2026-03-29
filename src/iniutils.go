@@ -1089,10 +1089,10 @@ func assignField(structPtr interface{}, parts []queryPart, value interface{}, ba
 						// Expect a [2]int32 array
 						if fieldVal.Kind() == reflect.Array && fieldVal.Len() == 2 {
 							// Read both elements as int32
-							a0 := uint16(fieldVal.Index(0).Int())
-							a1 := uint16(fieldVal.Index(1).Int())
+							a0 := int16(fieldVal.Index(0).Int())
+							a1 := int16(fieldVal.Index(1).Int())
 							if a0 >= 0 && a1 >= 0 {
-								key := [2]uint16{a0, a1}
+								key := [2]int16{a0, a1}
 								if preload == "char" {
 									sys.sel.charSpritePreload[key] = true
 								} else {
