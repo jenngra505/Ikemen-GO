@@ -475,7 +475,7 @@ func (s *System) init(w, h int32) *lua.LState {
 		s.stringPool[i] = *NewStringPool()
 	}
 	s.clsnSpr = *newSprite()
-	s.clsnSpr.Size, s.clsnSpr.Pal = [...]uint16{1, 1}, make([]uint32, 256)
+	s.clsnSpr.Size, s.clsnSpr.Pal = [...]int16{1, 1}, make([]uint32, 256)
 	s.clsnSpr.SetPxl([]byte{0})
 	// Create a reusable white palette texture for shadows
 	whitepal := make([]uint32, 256)
@@ -968,7 +968,7 @@ func (s *System) anyHardButton() bool {
 
 // Joysticks were already refactored to be polled less times, but having these functions still makes them be polled twice as often during intros/outros
 // We're already polling them about 10 times less so that should be enough anyway
-// In Mugen, intro/outro skipping only happens on button press, not button hold
+// TODO: In Mugen, intro/outro skipping only happens on button press, not button hold
 func (s *System) anyHardButton() bool {
 	// Button indices for a, b, c, x, y, z
 	hardButtonIdx := []int{4, 5, 6, 7, 8, 9}
@@ -1569,16 +1569,14 @@ func (s *System) gameTime() int32 {
 }
 
 // In Mugen, RoundState 2 begins as soon as the "Fight" screen appears, before players have control
-// That causes more harm than good and is not clearly stated in the documentation, so Ikemen changes it
+// Delta Warriors relies on this bug to work, so against all reasonable fighting game rules, this stays.
 func (s *System) roundState() int32 {
 	switch {
 	case sys.intro > sys.lifebar.ro.ctrl_time+1 || sys.postMatchFlg:
 		return 0
-	//case sys.lifebar.ro.current == 0:
-	case sys.intro > 0:
+	case sys.lifebar.ro.current == 0:
 		return 1
-	//case sys.intro >= 0 || sys.finishType == FT_NotYet:
-	case sys.intro == 0 || sys.finishType == FT_NotYet:
+	case sys.intro >= 0 || sys.finishType == FT_NotYet:
 		return 2
 	case sys.intro < -sys.lifebar.ro.over_waittime:
 		return 4
@@ -4175,8 +4173,8 @@ type Select struct {
 	selectedStageNo    int
 	charAnimPreload    map[int32]bool
 	stageAnimPreload   map[int32]bool
-	charSpritePreload  map[[2]uint16]bool
-	stageSpritePreload map[[2]uint16]bool
+	charSpritePreload  map[[2]int16]bool
+	stageSpritePreload map[[2]int16]bool
 	cdefOverwrite      map[int]string
 	palOverwrite       map[int]int
 	sdefOverwrite      string
@@ -4189,9 +4187,9 @@ func newSelect() *Select {
 		selectedStageNo:  -1,
 		charAnimPreload:  make(map[int32]bool),
 		stageAnimPreload: make(map[int32]bool),
-		charSpritePreload: map[[2]uint16]bool{[...]uint16{9000, 0}: true,
-			[...]uint16{9000, 1}: true},
-		stageSpritePreload: make(map[[2]uint16]bool),
+		charSpritePreload: map[[2]int16]bool{[...]int16{9000, 0}: true,
+			[...]int16{9000, 1}: true},
+		stageSpritePreload: make(map[[2]int16]bool),
 		palOverwrite:       make(map[int]int),
 		cdefOverwrite:      make(map[int]string),
 		music:              make(Music),
@@ -4500,7 +4498,7 @@ func (s *Select) AddChar(def string) *SelectChar {
 		}
 	}
 
-	listSpr := make(map[[2]uint16]bool)
+	listSpr := make(map[[2]int16]bool)
 	for k := range s.charSpritePreload {
 		listSpr[k] = true
 	}
@@ -4544,7 +4542,7 @@ func (s *Select) AddChar(def string) *SelectChar {
 						if fr.Group < 0 || fr.Number < 0 {
 							continue
 						}
-						listSpr[[2]uint16{uint16(fr.Group), uint16(fr.Number)}] = true
+						listSpr[[2]int16{int16(fr.Group), int16(fr.Number)}] = true
 					}
 				}
 			}
@@ -4789,9 +4787,9 @@ func (s *Select) AddStage(def string) (*SelectStage, error) {
 		}
 	}
 	if len(s.stageSpritePreload) > 0 || len(s.stageAnimPreload) > 0 {
-		listSpr := make(map[[2]uint16]bool)
+		listSpr := make(map[[2]int16]bool)
 		for k := range s.stageSpritePreload {
-			listSpr[[...]uint16{k[0], k[1]}] = true
+			listSpr[[...]int16{k[0], k[1]}] = true
 		}
 		sff := newSff()
 		// preload animations
@@ -4802,7 +4800,7 @@ func (s *Select) AddStage(def string) (*SelectStage, error) {
 				ss.anims.addAnim(anim, v)
 				for _, fr := range anim.frames {
 					if fr.Group >= 0 && fr.Number >= 0 {
-						listSpr[[2]uint16{uint16(fr.Group), uint16(fr.Number)}] = true
+						listSpr[[2]int16{int16(fr.Group), int16(fr.Number)}] = true
 					}
 				}
 			}
@@ -5150,7 +5148,7 @@ func (l *Loader) prepareTurnsFaces(pn int, fa *LifeBarFace, nm *LifeBarName, tea
 		fa.teammate_scale[i] = sc.portraitscale * 320 / float32(sc.localcoord[0])
 
 		// Get the sprite from the teammate's SFF
-		origSpr := sc.sff.GetSprite(uint16(fa.teammate_face_spr[0]), uint16(fa.teammate_face_spr[1]))
+		origSpr := sc.sff.GetSprite(int16(fa.teammate_face_spr[0]), int16(fa.teammate_face_spr[1]))
 		if origSpr == nil {
 			continue
 		}
