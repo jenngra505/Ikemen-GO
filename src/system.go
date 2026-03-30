@@ -1574,7 +1574,7 @@ func (s *System) roundState() int32 {
 	switch {
 	case sys.intro > sys.lifebar.ro.ctrl_time+1 || sys.postMatchFlg:
 		return 0
-	case sys.lifebar.ro.current == 0:
+	case sys.lifebar.ro.fightDisplayPhase == 0:
 		return 1
 	case sys.intro >= 0 || sys.finishType == FT_NotYet:
 		return 2
