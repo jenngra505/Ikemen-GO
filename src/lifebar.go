@@ -3132,7 +3132,7 @@ func (ro *LifeBarRound) act() bool {
 			sys.introSkipCall = true
 			ro.fadeIn.timeRemaining = 0
          if !sys.motif.di.active && !sys.dialogueBarsFlg && sys.dialogueForce == 0 {
-		        ro.roundDisplayEnded = true
+		        ro.roundDisplayPhase = 2
                 ro.fightDisplayTimer = ro.callfight_time
                 sys.intro = 1
 		    for i, p := range sys.chars {
