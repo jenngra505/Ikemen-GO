@@ -3061,9 +3061,9 @@ func (m *Motif) draw(layerno int16) {
 	}
 	// Screen fading
 	if layerno == 3 {
-		if m.fadeOut.shouldDraw() {
+		if m.fadeOut.isActive() {
 			m.fadeOut.draw()
-		} else if m.fadeIn.shouldDraw() {
+		} else if m.fadeIn.isActive() {
 			m.fadeIn.draw()
 		}
 	}
@@ -3512,6 +3512,7 @@ type MotifContinue struct {
 	initialized bool
 	counter     int32
 	endTimer    int32
+	waitTimer   int32
 	showEndAnim bool
 	credits     int32
 	yesSide     bool
@@ -3527,6 +3528,7 @@ func (co *MotifContinue) reset(m *Motif) {
 	co.yesSide = true
 	co.selected = false
 	co.endTimer = -1
+	co.waitTimer = 0
 	co.showEndAnim = false
 	if !sys.skipMotifScaling() {
 		sys.applyFightAspect()
@@ -3615,6 +3617,7 @@ func (co *MotifContinue) init(m *Motif) {
 	co.active = true
 	co.initialized = true
 	co.showEndAnim = false
+	co.waitTimer = 0
 }
 
 func (co *MotifContinue) processSelection(m *Motif, continueSelected bool) {
@@ -3634,8 +3637,8 @@ func (co *MotifContinue) processSelection(m *Motif, continueSelected bool) {
 			[4][]int32{cs.P1.No.State, cs.P3.No.State, cs.P5.No.State, cs.P7.No.State},
 		)
 	}
-	startFadeOut(m.ContinueScreen.FadeOut.FadeData, m.fadeOut, false, m.fadePolicy)
-	co.endTimer = co.counter + m.fadeOut.timeRemaining
+	co.waitTimer = -1
+	co.endTimer = -1
 	co.selected = true
 }
 
@@ -3688,6 +3691,26 @@ func (co *MotifContinue) step(m *Motif) {
 		co.counter >= m.ContinueScreen.Counter.EndTime {
 		startFadeOut(m.ContinueScreen.FadeOut.FadeData, m.fadeOut, false, m.fadePolicy)
 		co.endTimer = co.counter + m.fadeOut.timeRemaining
+	}
+
+	// Wait for the triggered done anim to finish before starting fadeout.
+	if co.selected && !co.showEndAnim && co.endTimer == -1 {
+		if co.waitTimer < 0 {
+			var wait int32
+			for _, p := range sys.chars {
+				if len(p) == 0 || p[0].anim == nil {
+					continue
+				}
+				wait = Max(wait, p[0].anim.GetLength())
+			}
+			co.waitTimer = Clamp(wait, int32(0), int32(120))
+		}
+		if co.waitTimer > 0 {
+			co.waitTimer--
+		} else {
+			startFadeOut(m.ContinueScreen.FadeOut.FadeData, m.fadeOut, false, m.fadePolicy)
+			co.endTimer = co.counter + m.fadeOut.timeRemaining
+		}
 	}
 
 	if !co.selected {
@@ -3818,7 +3841,7 @@ func (de *MotifDemo) step(m *Motif) {
 	if de.endTimer == -1 {
 		cancel := (m.AttractMode.Enabled && sys.credits > 0) || (!m.AttractMode.Enabled && sys.uiRawInput(m.DemoMode.Cancel.Key, -1))
 		if de.counter == m.DemoMode.Fight.EndTime || cancel {
-			startFadeOut(m.DemoMode.FadeOut.FadeData, sys.lifebar.ro.fadeOut, cancel, m.fadePolicy)
+			startFadeOut(m.DemoMode.FadeOut.FadeData, sys.lifebar.ro.fadeOut, false, m.fadePolicy)
 			de.endTimer = de.counter + sys.lifebar.ro.fadeOut.timeRemaining
 		}
 	}
@@ -5029,10 +5052,10 @@ func (hi *MotifHiscore) makeRowTextSprite(tpl *TextSprite, x, y float32, text st
 }
 
 func (hi *MotifHiscore) init(m *Motif, mode string, place, endTime int32, noFade, noBgs, noOverlay bool) {
-	//if !m.HiscoreInfo.Enabled || !hi.enabled {
-	//	hi.initialized = true
-	//	return
-	//}
+	if !m.HiscoreInfo.Enabled || !hi.enabled {
+		hi.initialized = true
+		return
+	}
 
 	if err := sys.luaLState.DoString("hook.run('game.hiscore_init')"); err != nil {
 		sys.luaLState.RaiseError("Error executing Lua hook: %s\n%v", "game.hiscore_init", err.Error())
@@ -6534,8 +6557,11 @@ func (wi *MotifWin) isEnabled() bool {
 
 // Initialize the MotifWin based on the current game mode
 func (wi *MotifWin) init(m *Motif) {
-	if (wi.isEnabled() && sys.winnerTeam() != 0 && sys.winnerTeam() != int32(sys.home)+1) ||
-		(wi.loseEnabled && (sys.winnerTeam() == 0 || sys.winnerTeam() == int32(sys.home)+1)) {
+	won := sys.winnerTeam() != 0 && sys.winnerTeam() != int32(sys.home)+1
+	lostOrDraw := sys.winnerTeam() == 0 || sys.winnerTeam() == int32(sys.home)+1
+	hasModeResults := resultsScreenForMode(sys.gameMode) != nil
+
+	if (wi.isEnabled() && won) || ((wi.loseEnabled || hasModeResults) && lostOrDraw) {
 		if err := sys.luaLState.DoString("hook.run('game.result_init')"); err != nil {
 			sys.luaLState.RaiseError("Error executing Lua hook: %s\n%v", "game.result_init", err.Error())
 		}
