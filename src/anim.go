@@ -604,13 +604,13 @@ func (a *Animation) UpdateSprite() {
 			}
 		}
 		if group >= 0 && number >= 0 {
-			a.spr = a.sff.GetSprite(uint16(group), uint16(number))
+			a.spr = a.sff.GetSprite(int16(group), int16(number))
 			if a.spr == nil {
 				// Log missing sprites
 				// We will save the history in the SFF itself so that each sprite is only mentioned once
-				key := [2]uint16{uint16(group), uint16(number)}
+				key := [2]int16{int16(group), int16(number)}
 				if a.sff.debugMissing == nil {
-					a.sff.debugMissing = make(map[[2]uint16]bool)
+					a.sff.debugMissing = make(map[[2]int16]bool)
 				}
 				if !a.sff.debugMissing[key] {
 					LogMessage("WARNING: Animation missing sprite %v,%v from %v", group, number, a.sff.filename)
