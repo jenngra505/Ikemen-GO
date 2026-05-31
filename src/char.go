@@ -130,6 +130,7 @@ const (
 	GSF_timerfreeze
 	// Ikemen flags
 	GSF_camerafreeze
+	GSF_notimedisplay
 	GSF_roundfreeze
 	GSF_roundnotskip
 	GSF_skipfightdisplay
@@ -164,14 +165,6 @@ const (
 	Projection_Orthographic Projection = iota
 	Projection_Perspective
 	Projection_Perspective2
-)
-
-type SaveData int32
-
-const (
-	SaveData_map SaveData = iota
-	SaveData_var
-	SaveData_fvar
 )
 
 type DebugClsnText struct {
@@ -1916,7 +1909,7 @@ func (e *Explod) update() {
 		return
 	}
 
-	if e.hidewithbars && (!sys.fightScreen.visible() || sys.gsf(GSF_nobardisplay) || !sys.fightScreen.bars) {
+	if e.hidewithbars && sys.shouldHideWithBars() {
 		return
 	}
 
@@ -2499,8 +2492,8 @@ func (p *Projectile) update() {
 		if p.status == ProjActive {
 			if p.removetime == 0 ||
 				p.removetime <= -2 && (p.anim == nil || p.anim.loopend) ||
-				p.pos[0] < (sys.xmin-sys.screenleft)/p.localscl-float32(p.edgebound) ||
-				p.pos[0] > (sys.xmax+sys.screenright)/p.localscl+float32(p.edgebound) ||
+				p.pos[0] < (sys.xmin-sys.screenleft())/p.localscl-float32(p.edgebound) ||
+				p.pos[0] > (sys.xmax+sys.screenright())/p.localscl+float32(p.edgebound) ||
 				p.velocity[0]*p.facing < 0 && p.pos[0] < sys.cam.XMin/p.localscl-float32(p.stagebound) ||
 				p.velocity[0]*p.facing > 0 && p.pos[0] > sys.cam.XMax/p.localscl+float32(p.stagebound) ||
 				p.velocity[1] > 0 && p.pos[1] > float32(p.heightbound[1]) ||
@@ -3055,17 +3048,17 @@ func newCharGlobalInfo() CharGlobalInfo {
 
 // StateState contains the state variables like stateNo, prevStateNo, time, stateType, moveType, and physics of the current state.
 type StateState struct {
-	stateType                    StateType
-	prevStateType                StateType
-	moveType                     MoveType
-	prevMoveType                 MoveType
-	storeMoveType                bool
-	physics                      StateType
-	ps                           []int32
-	hitPauseExecutionToggleFlags [MaxPlayerNo][]bool // Flags if an sctrl runs during a hit pause on the current tick.
-	no, prevno                   int32
-	time                         int32
-	sb                           StateBytecode
+	stateType     StateType
+	prevStateType StateType
+	moveType      MoveType
+	prevMoveType  MoveType
+	storeMoveType bool
+	physics       StateType
+	ps            []int32
+	no, prevno    int32
+	time          int32
+	sb            StateBytecode
+	//hitPauseExecutionToggleFlags [MaxPlayerNo][]bool // Flags if an sctrl runs during a hit pause on the current tick.
 }
 
 func (ss *StateState) changeStateType(t StateType) {
@@ -3083,25 +3076,30 @@ func (ss *StateState) clear() {
 	ss.changeMoveType(MT_I)
 	ss.physics = ST_N
 	ss.ps = nil
-	// Iterate over each player's hitPauseExecutionToggleFlags
-	for i, v := range ss.hitPauseExecutionToggleFlags {
-		// Ensure the slice has enough capacity based on hitPauseToggleFlagCount
-		if len(v) < int(sys.cgi[i].hitPauseToggleFlagCount) {
-			ss.hitPauseExecutionToggleFlags[i] = make([]bool, sys.cgi[i].hitPauseToggleFlagCount)
-		} else {
-			// Reset all flags to false
-			for i := range v {
-				v[i] = false
+
+	/*
+		// Iterate over each player's hitPauseExecutionToggleFlags
+		for i, v := range ss.hitPauseExecutionToggleFlags {
+			// Ensure the slice has enough capacity based on hitPauseToggleFlagCount
+			if len(v) < int(sys.cgi[i].hitPauseToggleFlagCount) {
+				ss.hitPauseExecutionToggleFlags[i] = make([]bool, sys.cgi[i].hitPauseToggleFlagCount)
+			} else {
+				// Reset all flags to false
+				for i := range v {
+					v[i] = false
+				}
 			}
 		}
-	}
-	// Further clear the hitPauseExecutionToggleFlags
-	ss.clearHitPauseExecutionToggleFlags()
+		// Further clear the hitPauseExecutionToggleFlags
+		ss.clearHitPauseExecutionToggleFlags()
+	*/
+
 	ss.no, ss.prevno = 0, 0
 	ss.time = 0
 	ss.sb = StateBytecode{}
 }
 
+/*
 // Resets all hitPauseExecutionToggleFlags to false.
 // This ensures that all state controllers are set to execute on the next eligible tick.
 func (ss *StateState) clearHitPauseExecutionToggleFlags() {
@@ -3111,6 +3109,7 @@ func (ss *StateState) clearHitPauseExecutionToggleFlags() {
 		}
 	}
 }
+*/
 
 type HMF int32
 
@@ -5977,11 +5976,11 @@ func (c *Char) selfStatenoExist(stateno BytecodeValue) BytecodeValue {
 func (c *Char) stageFrontEdgeDist() float32 {
 	corner := float32(0)
 	if c.facing < 0 {
-		corner = Max(sys.cam.XMin/c.localscl+sys.screenleft/c.localscl,
+		corner = Max(sys.cam.XMin/c.localscl+sys.screenleft()/c.localscl,
 			sys.stage.leftbound*sys.stage.localscl/c.localscl)
 		return c.pos[0] - corner
 	} else {
-		corner = Min(sys.cam.XMax/c.localscl-sys.screenright/c.localscl,
+		corner = Min(sys.cam.XMax/c.localscl-sys.screenright()/c.localscl,
 			sys.stage.rightbound*sys.stage.localscl/c.localscl)
 		return corner - c.pos[0]
 	}
@@ -5990,11 +5989,11 @@ func (c *Char) stageFrontEdgeDist() float32 {
 func (c *Char) stageBackEdgeDist() float32 {
 	corner := float32(0)
 	if c.facing < 0 {
-		corner = Min(sys.cam.XMax/c.localscl-sys.screenright/c.localscl,
+		corner = Min(sys.cam.XMax/c.localscl-sys.screenright()/c.localscl,
 			sys.stage.rightbound*sys.stage.localscl/c.localscl)
 		return corner - c.pos[0]
 	} else {
-		corner = Max(sys.cam.XMin/c.localscl+sys.screenleft/c.localscl,
+		corner = Max(sys.cam.XMin/c.localscl+sys.screenleft()/c.localscl,
 			sys.stage.leftbound*sys.stage.localscl/c.localscl)
 		return c.pos[0] - corner
 	}
@@ -6720,8 +6719,8 @@ func (c *Char) newHelper() (h *Char) {
 }
 
 // Init helper after reading the bytecode parameters
-func (c *Char) helperInit(h *Char, st int32, pt PosType, x, y, z float32, facing int32, rp [2]int32, extmap bool) {
-	p := c.helperPos(pt, [3]float32{x, y, z}, facing, &h.facing, h.localscl, false)
+func (c *Char) helperInit(h *Char, st int32, pt PosType, pos [3]float32, facing int32, rp [2]int32) {
+	p := c.helperPos(pt, pos, facing, &h.facing, h.localscl, false)
 	h.setPosX(p[0], true)
 	h.setPosY(p[1], true)
 	h.setPosZ(p[2], true)
@@ -6738,13 +6737,7 @@ func (c *Char) helperInit(h *Char, st int32, pt PosType, x, y, z float32, facing
 		c.forceRemapPal(h.palfx, rp)
 	} else {
 		h.palfx = c.getPalfx()
-	}
-
-	// Copy parent maps
-	if extmap {
-		for key, value := range c.mapArray {
-			h.mapArray[key] = value
-		}
+		h.ignoreDarkenTime = c.ignoreDarkenTime
 	}
 
 	// Mugen 1.1 behavior if invertblend param is omitted(Only if char mugenversion = 1.1)
@@ -8931,7 +8924,7 @@ func (c *Char) p2BodyDistZ(oc *Char) BytecodeValue {
 
 func (c *Char) setPauseTime(pausetime, movetime int32) {
 	// Buffer a new Pause only if its timer is higher than the current one or the same player is overriding their own pause
-	// This method is more complex but also fairer than Mugen, where only the last pause triggered matters
+	// This method is more complex but also fairer than Mugen, where only the last triggered pause matters
 	if ^pausetime < sys.pausetimebuffer || sys.pauseplayerno == c.playerNo || c.playerNo != c.ss.sb.playerNo {
 		sys.pausetimebuffer = ^pausetime
 		sys.pauseplayerno = c.playerNo
@@ -8966,11 +8959,14 @@ func (c *Char) setSuperPauseTime(pausetime, movetime int32, unhittable bool, p2d
 		c.superMovetime--
 	}
 
+	// Because the pause will only happen in the next frame, we'll extend this timer by 1
 	if unhittable {
 		c.unhittableTime = pausetime + Btoi(pausetime > 0)
 	}
 
-	c.ignoreDarkenTime = pausetime
+	// Same with this timer
+	c.ignoreDarkenTime = pausetime + Btoi(pausetime > 0)
+	c.propagateIgnoreDarkenTime()
 
 	// Apply superp2defmul to other teams
 	// Having this here makes it stack when partners initiate a double pause. Mugen does the same
@@ -8982,6 +8978,46 @@ func (c *Char) setSuperPauseTime(pausetime, movetime int32, unhittable bool, p2d
 					e.superDefenseMulBuffer *= p2defmul
 				}
 			}
+		}
+	}
+}
+
+// In Mugen, the darkening effect depends on the ownpal parameter, making its mechanism fairly different from ours
+// We will emulate that by passing the timer along the "ownpal family tree"
+func (c *Char) propagateIgnoreDarkenTime() {
+	value := c.ignoreDarkenTime
+	top := c
+
+	// Find the top of the tree
+	// Mugen doesn't do this. If the current helper has no ownpal, both it and its parent will darken
+	if !c.ownpal {
+		for {
+			parent := top.parent(false)
+			if parent == nil {
+				break
+			}
+			top = parent
+			if top.ownpal {
+				break
+			}
+		}
+	}
+
+	top.ignoreDarkenTime = value
+
+	// Propagate down the tree
+	stack := []*Char{top}
+	for len(stack) > 0 {
+		node := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		for _, childID := range node.children {
+			child := sys.playerID(childID)
+			if child == nil || child.ownpal {
+				continue
+			}
+			child.ignoreDarkenTime = value
+			stack = append(stack, child)
 		}
 	}
 }
@@ -9732,7 +9768,7 @@ func (c *Char) xScreenBound() {
 	x := c.pos[0]
 	before := x
 
-	if !sys.cam.roundstart && c.trackableByCamera() && c.csf(CSF_screenbound) && !c.scf(SCF_standby) {
+	if c.trackableByCamera() && c.csf(CSF_screenbound) && !c.scf(SCF_standby) {
 		min, max := c.edgeWidth[0], -c.edgeWidth[1]
 		if c.facing > 0 {
 			min, max = -max, -min
@@ -11497,9 +11533,6 @@ func (c *Char) actionPrepare() {
 			} else if sys.pausetime > 0 && c.pauseMovetime > 0 {
 				c.pauseMovetime--
 			}
-			if c.ignoreDarkenTime > 0 {
-				c.ignoreDarkenTime--
-			}
 		}
 
 		// Reset input modifiers
@@ -11562,6 +11595,11 @@ func (c *Char) actionPrepare() {
 		c.fLength = 2048
 		c.projection = Projection_Orthographic
 	}
+
+	if c.ignoreDarkenTime > 0 {
+		c.ignoreDarkenTime--
+	}
+
 	// Decrease unhittable timer
 	// This used to be in tick(), but Mugen Clsn display suggests it happens sooner than that
 	// This also used to be CharGlobalInfo, but that made root and helpers share the same timer
@@ -11777,6 +11815,8 @@ func (c *Char) actionRun() {
 					c.receivedHits = 0
 					c.ghv.score = 0
 					c.ghv.down_recovertime = c.gi().data.liedown.time
+					// Mugen specifically resets this one for some reason
+					c.ghv.fall_envshake_time = 0
 					// In Mugen, when returning to idle, characters cannot act until the next frame
 					// To account for this, combos in Mugen linger one frame longer than they normally would in a fighting game
 					// Ikemen's "fake combo" code used to replicate this behavior
@@ -12161,9 +12201,9 @@ func (c *Char) tick() {
 		// This flag prevents prevMoveType from being changed twice
 		c.ss.storeMoveType = true
 		c.ss.changeMoveType(MT_H)
-		if c.hitPauseTime > 0 {
-			c.ss.clearHitPauseExecutionToggleFlags()
-		}
+		//if c.hitPauseTime > 0 {
+		//	c.ss.clearHitPauseExecutionToggleFlags()
+		//}
 		c.hitPauseTime = 0
 		//c.targetDrop(-1, false) // GitHub #1148
 		pn := c.playerNo
@@ -12240,7 +12280,7 @@ func (c *Char) tick() {
 		if c.hitPauseTime > 0 {
 			c.hitPauseTime--
 			if c.hitPauseTime == 0 {
-				c.ss.clearHitPauseExecutionToggleFlags()
+				//c.ss.clearHitPauseExecutionToggleFlags()
 				//Having a hitStateChangeIdx means that ChangeState was performed during the hitpause
 				if c.hitStateChangeIdx != -1 {
 					// For Mugen compatibility, the persistent is reset when the hitpause ends during ChangeState
