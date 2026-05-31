@@ -4691,19 +4691,19 @@ func (c *Char) parent(log bool) *Char {
 		return nil
 	}
 
-	// In Mugen, after the original parent has been destroyed, "parent" can still be valid if a new helper ends up occupying the same slot
-	// That is undesirable behavior however, and is probably only used by exploit characters, which already don't work correctly anyway
+	// TODO: In Mugen, after the original parent has been destroyed, "parent" can still be valid if a new helper ends up occupying the same slot
+	// This is probably only used by exploit characters, but retrocompatibility comes above all.
 	p, ok := sys.charList.idMap[c.parentId]
 	if !ok {
 		if log {
 			sys.appendToConsole(c.warn() + "parent has already been destroyed")
-			if !sys.ignoreMostErrors {
+			/*if !sys.ignoreMostErrors {
 				LogMessage(c.name + " parent has already been destroyed")
 			}
 		}
 		return nil
-	}
-
+	*/}
+    }
 	return p
 }
 
@@ -8133,10 +8133,14 @@ func (c *Char) numStageBG(id BytecodeValue) BytecodeValue {
 func (c *Char) getTarget(id int32, idx int) []int32 {
 	// If ID and index are negative, just return all targets
 	// In Mugen the ID must be specifically -1
+if c.stWgi().ikemenver[0] != 0 && c.stWgi().ikemenver[1] != 0 {
 	if id < 0 && idx < 0 {
 		return c.targets
-	}
-
+	} else
+    	if id == -1 && idx == -1 {
+		return c.targets
+    }
+}
 	// Filter targets with the specified ID
 	var filteredTargets []int32
 	for _, tid := range c.targets {
@@ -9073,8 +9077,8 @@ func (c *Char) inputWait() bool {
 		return true
 	}
 	return false
-	// In Mugen, once the win poses start the winners can use inputs again but the losers (including draws) cannot
-	// This is not currently reproduced and may not be necessary
+	// TODO: In Mugen, once the win poses start the winners can use inputs again but the losers (including draws) cannot
+	// This is not currently reproduced
 }
 
 func (c *Char) makeDust(x, y, z float32, spacing int) {
@@ -10776,7 +10780,7 @@ func (c *Char) hitResultCheck(getter *Char, proj *Projectile) (hitResult int32) 
 
 			// Clear GetHitVars while stacking those that need it
 			// Skipping this step makes the test case in #1891 work, but for different reasons than in Mugen
-			ghv.selectiveReset(getter)
+			//ghv.selectiveReset(getter)
 
 			ghv.attr = hd.attr
 			ghv.guardflag = hd.guardflag
@@ -11387,10 +11391,12 @@ func (c *Char) hitResultCheck(getter *Char, proj *Projectile) (hitResult int32) 
 			sys.envShake.dir = hd.envshake_dir * float32(math.Pi) / 180
 			sys.envShake.setDefaultPhase()
 		}
+        getterNextPos := (getter.pos[0] + getter.vel[0]*getter.facing) * getter.localscl
+		getterCornered := getterNextPos <= sys.xmin || getterNextPos >= sys.xmax
 		// Cornerpush on hit
 		// In Mugen it is only set if the enemy is already in the corner before the hit
 		// In Ikemen it is set regardless, with corner distance being checked later
-		if hitResult > 0 && !isProjectile && getter.isPlayerType() {
+		if hitResult > 0 && !isProjectile && getter.isPlayerType() && getterCornered {
 			switch getter.ss.stateType {
 			case ST_S, ST_C:
 				c.mhv.cornerpush_veloff = hd.ground_cornerpush_veloff * c.facing
@@ -11494,7 +11500,7 @@ func (c *Char) actionPrepare() {
 			c.pushPriority = 0
 			c.pushAffectTeam = 1
 			// HitBy timers
-			// In Mugen this seems to happen at the end of each frame instead
+			// TODO: In Mugen this seems to happen at the end of each frame instead
 			for i := range c.hitby {
 				if c.hitby[i].time > 0 {
 					c.hitby[i].time--
@@ -11504,7 +11510,7 @@ func (c *Char) actionPrepare() {
 				}
 			}
 			// HitOverride timers
-			// In Mugen they decrease even during hitpause. However no issues have arised from not doing that yet
+			// TODO: In Mugen they decrease even during hitpause.
 			for i := range c.hover {
 				if c.hover[i].time > 0 {
 					c.hover[i].time--
@@ -11597,7 +11603,7 @@ func (c *Char) actionPrepare() {
 	// Decrease unhittable timer
 	// This used to be in tick(), but Mugen Clsn display suggests it happens sooner than that
 	// This also used to be CharGlobalInfo, but that made root and helpers share the same timer
-	// In Mugen this timer won't decrease unless the char has a Clsn box (of any type)
+	// TODO: In Mugen this timer won't decrease unless the char has a Clsn box (of any type)
 	if c.unhittableTime > 0 {
 		c.unhittableTime--
 	}
@@ -11845,8 +11851,7 @@ func (c *Char) actionRun() {
 		}
 		c.makeDustSpacing++
 	}
-	// In Mugen these happen instantly instead of in the next frame
-	// This way is more consistent with damage, however
+	// TODO: In Mugen these happen instantly instead of in the next frame
 	if c.ghv.power != 0 {
 		c.powerAdd(c.ghv.power)
 		c.ghv.power = 0
@@ -13199,7 +13204,7 @@ func (cl *CharList) hitDetectionPlayer(getter *Char) {
 								}
 
 								// Clear GetHitVars while stacking those that need it
-								getter.ghv.selectiveReset(getter)
+								//getter.ghv.selectiveReset(getter)
 
 								getter.ghv.attr = c.hitdef.attr
 								getter.ghv.hitid = c.hitdef.id

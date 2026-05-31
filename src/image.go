@@ -488,7 +488,7 @@ func (pl *PaletteList) SelectablePalIndex(palNum int) int {
 // Convert palette color slice into the format used in textures
 func Pal32ToBytes(pal []uint32) []byte {
 	if len(pal) == 0 {
-		return nil
+		return unsafe.Slice((*byte)(unsafe.Pointer(&pal[0])), 1024)
 	}
 
 	// Fast path if palette is already 256 colors
@@ -506,13 +506,12 @@ func Pal32ToBytes(pal []uint32) []byte {
 
 func NewTextureFromPalette(pal []uint32) Texture {
 	tx := gfx.newPaletteTexture()
+    
+	tx.SetData(Pal32ToBytes(pal))
 
-	// Safely handle invalid palettes
+	// Unsafely handle invalid palettes
 	if len(pal) == 0 {
 		LogMessage("Invalid palette texture. Defaulting to none")
-		tx.SetData(nil)
-	} else {
-		tx.SetData(Pal32ToBytes(pal))
 	}
 
 	return tx
